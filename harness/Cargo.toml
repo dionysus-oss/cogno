@@ -1,0 +1,8 @@
+[package]
+name = "cogno"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+attr = { path = "./attr" }
+assert = { path = "./assert" }

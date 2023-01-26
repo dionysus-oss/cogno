@@ -1,0 +1,12 @@
+[package]
+name = "cargo-cogno"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core = { path = "../core" }
+cargo = { version = "0.67.1", features = ["vendored-openssl"] }
+cargo-util = "0.2.2"
+clap = { version = "4", features = [ "color", "derive", "cargo" ] }
+anyhow = "1"
+regex = "1"

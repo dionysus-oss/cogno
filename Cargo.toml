@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "core",
+    "harness",
+    "cargo-cogno",
+    "example",
+]
