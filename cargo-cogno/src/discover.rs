@@ -1,23 +1,23 @@
 use anyhow::Result;
-use core::FunctionRef;
+use core::ModuleRef;
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-pub fn discover<P: AsRef<Path>>(path: P) -> Result<Vec<FunctionRef>> {
+pub fn discover<P: AsRef<Path>>(path: P) -> Result<Vec<ModuleRef>> {
     let mut source_files = discover_source_files(&path, &PathBuf::new())?;
 
     let pattern = Regex::new(r"(?sU)#\[cogno_test].*fn (?P<fname>.*)\(")?;
 
-    for fr in source_files.iter_mut() {
-        let mut file = File::open(fr.get_path())?;
+    for module_ref in source_files.iter_mut() {
+        let mut file = File::open(module_ref.get_path())?;
         let mut string = String::new();
         file.read_to_string(&mut string)?;
 
         for captures in pattern.captures_iter(string.as_str()) {
             if let Some(m) = captures.name("fname") {
-                fr.add_function(m.as_str().to_string());
+                module_ref.add_function(m.as_str().to_string());
             }
         }
     }
@@ -29,7 +29,7 @@ pub fn discover<P: AsRef<Path>>(path: P) -> Result<Vec<FunctionRef>> {
         .collect())
 }
 
-fn discover_source_files<P1: AsRef<Path>>(path: &P1, sub: &PathBuf) -> Result<Vec<FunctionRef>> {
+fn discover_source_files<P1: AsRef<Path>>(path: &P1, sub: &PathBuf) -> Result<Vec<ModuleRef>> {
     let search = path.as_ref().join(sub);
 
     let mut output = Vec::new();
@@ -42,7 +42,7 @@ fn discover_source_files<P1: AsRef<Path>>(path: &P1, sub: &PathBuf) -> Result<Ve
             output.append(&mut sub_found);
         } else if file_type.is_file() {
             if let Some(Some("rs")) = s.path().extension().map(|s| s.to_str()) {
-                output.push(FunctionRef::new(
+                output.push(ModuleRef::new(
                     s.path(),
                     sub.join(s.path().file_name().unwrap().to_str().unwrap())
                         .into(),

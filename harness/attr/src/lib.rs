@@ -1,9 +1,11 @@
 use proc_macro::{Delimiter, Group, TokenStream, TokenTree};
-use std::path::Path;
+use core::debug::debug_enabled;
 
 #[proc_macro_attribute]
 pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
-    println!("cogno_test => {}", item.to_string());
+    if debug_enabled() {
+        println!("cogno_test => {}", item.to_string());
+    }
 
     let mut ret = TokenStream::new();
 
@@ -23,7 +25,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
             match token {
                 TokenTree::Group(g) => {
                     if g.delimiter() == Delimiter::Parenthesis {
-                        ret.extend(to_token_stream("(recorder: &mut cogno::TestRecorder)"));
+                        ret.extend(to_token_stream("(recorder: &mut std::sync::Arc<std::sync::Mutex<cogno::TestRecorder>>)"));
                         param_injected = true;
                     } else {
                         panic!("unexpected group after test function name");
@@ -55,31 +57,70 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
             }
         };
 
-        let mut new_body = to_token_stream(
-            r#"println!("injected before");
-            "#,
-        );
+        let mut new_body = TokenStream::new();
 
-        new_body.extend(to_token_stream(&format!(
-            r#"recorder.register("{}");
-            "#,
-            fn_name
-        )));
+        let mut group_stream = group.stream().into_iter().peekable();
+        while let Some(tt) = group_stream.peek() {
+            match tt.to_string().as_str() {
+                "should_eq" | "should_not_eq" | "must_eq" | "must_not_eq" | "may_eq" => {
+                    new_body.extend(group_stream.next());
 
-        new_body.extend(group.stream());
+                    if group_stream.peek().is_some() && group_stream.peek().unwrap().to_string() == "!" {
+                        new_body.extend(group_stream.next());
+                        match group_stream.next() {
+                            Some(TokenTree::Group(g)) => {
+                                let mut new_group = TokenStream::new();
+                                new_group.extend(to_token_stream("recorder_thread_ref,"));
+                                new_group.extend(g.stream());
 
-        new_body.extend(to_token_stream(
-            r#"
-            println!("injected after");
-        "#,
-        ));
+                                new_body.extend(Some(TokenTree::from(Group::new(
+                                    g.delimiter(),
+                                    new_group,
+                                ))));
+                            }
+                            _ => {
+                                panic!("expected arguments after assertion macro");
+                            }
+                        }
+                    } else {
+                        panic!("identifier conflicts with an assertion macro")
+                    }
+                }
+                _ => {
+                    new_body.extend(group_stream.next());
+                }
+            }
+        }
 
-        new_body.extend(to_token_stream(r#"recorder.complete();"#));
+        let wrapped_body = to_token_stream(format!(r#"
+            recorder.lock().unwrap().register("{}");
+
+    let recorder_thread_ref = recorder.clone();
+
+    let result = std::thread::Builder::new()
+    .name("{}".to_string())
+    .spawn(move || {{
+        std::panic::catch_unwind(move || {{
+                {}
+            }})
+        }}).unwrap().join().unwrap();
+
+        match result {{
+            Ok(_) => {{
+                recorder.lock().unwrap().complete();
+            }}
+            _ => {{}}
+        }};
+        "#, fn_name, fn_name, new_body.to_string()).as_str());
 
         ret.extend(Some(TokenTree::from(Group::new(
             group.delimiter(),
-            new_body,
+            wrapped_body,
         ))));
+    }
+
+    if debug_enabled() {
+        println!("cogno_test transformed => {}", ret.to_string());
     }
 
     ret
@@ -87,7 +128,9 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
-    println!("cogno_main => {}", item.to_string());
+    if debug_enabled() {
+        println!("cogno_main => {}", item.to_string());
+    }
 
     let manifest_path = option_env!("COGNO_MANIFEST");
     // TODO check up to date? should really always run with cargo cogno but could just run with cargo run
@@ -95,27 +138,39 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
         panic!("Run with `cargo cogno`")
     }
 
-    let manifest = core::load(manifest_path.unwrap()).unwrap();
+    let manifest = core::load_manifest(manifest_path.unwrap()).unwrap();
 
-    println!("manifest {:?}", manifest);
-
-    let mut ret = String::new();
-    ret.push_str("use cogno::TestRecorder;\n");
-    ret.push_str("fn main() {\n");
-
-    ret.push_str("  let mut recorder = TestRecorder::new();");
-
-    for fr in manifest {
-        println!("{}", fr.to_source());
-        ret.push_str(fr.to_source().as_str());
+    if debug_enabled() {
+        println!("manifest => {:?}", manifest);
     }
 
-    ret.push_str(r#"  println!("{:?}", recorder);"#);
-    ret.push_str("\n}");
+    let mut ret = String::new();
+    ret.push_str("fn main() {");
 
-    println!("{}", ret.to_string());
+    ret.push_str("let mut recorder = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestRecorder::new()));");
 
-    to_token_stream(ret.as_str())
+    ret.push_str(r#"
+    let recorder_panic_ref = recorder.clone();
+    std::panic::set_hook(Box::new(move |info| {
+        let mut recorder_handle = recorder_panic_ref.lock().unwrap();
+        recorder_handle.set_panic_info(info.to_string());
+    }));
+    "#);
+
+    for module_ref in manifest {
+        ret.push_str(format!("{}", module_ref.to_source()).as_str());
+    }
+
+    ret.push_str(r#"println!("{:?}", recorder.lock().unwrap());"#);
+    ret.push_str("}");
+
+    let ret = to_token_stream(ret.as_str());
+
+    if debug_enabled() {
+        println!("cogno_main transformed => {}", ret.to_string());
+    }
+
+    ret
 }
 
 fn to_token_stream(code: &str) -> TokenStream {

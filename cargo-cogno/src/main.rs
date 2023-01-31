@@ -28,7 +28,7 @@ fn main() -> Result<()> {
 
     let found = discover::discover(&current_project.join("src"))?;
     let manifest_path = path.join("cogno-manifest.json");
-    core::dump(found, &manifest_path)?;
+    core::dump_manifest(found, &manifest_path)?;
 
     std::env::set_var("COGNO_MANIFEST", manifest_path.to_str().unwrap());
 
