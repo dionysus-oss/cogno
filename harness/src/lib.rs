@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt::Debug;
 pub use assert::*;
 pub use attr::*;
@@ -10,15 +11,21 @@ mod spec;
 #[derive(Debug)]
 pub struct TestController {
     tests: Vec<TestDef>,
+    specs: HashSet<String>,
     reporter: Box<dyn Reporter>,
 }
 
 impl TestController {
-    pub fn new() -> Self {
+    pub fn new(specs: HashSet<String>) -> Self {
         TestController {
             tests: Vec::new(),
+            specs,
             reporter: create_reporter(),
         }
+    }
+
+    pub fn is_spec_enabled(&self, spec: &str) -> bool {
+        self.specs.contains(spec)
     }
 
     pub fn register(&mut self, name: &str) {

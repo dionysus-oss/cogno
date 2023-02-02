@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 pub fn discover<P: AsRef<Path>>(path: P) -> Result<Vec<ModuleRef>> {
     let mut source_files = discover_source_files(&path, &PathBuf::new())?;
 
-    let pattern = Regex::new(r"(?sU)#\[cogno_test].*fn (?P<fname>.*)\(")?;
+    let pattern = Regex::new(r"(?sU)#\[cogno_test.*].*fn (?P<fname>.*)\(")?;
 
     for module_ref in source_files.iter_mut() {
         let mut file = File::open(module_ref.get_path())?;

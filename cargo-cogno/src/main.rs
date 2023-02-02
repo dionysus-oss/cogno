@@ -1,3 +1,6 @@
+// For intersperse in itertools vs stdlib
+#![allow(unstable_name_collisions)]
+
 use anyhow::{anyhow, Result};
 use cargo::util::command_prelude::ArgMatchesExt;
 use cargo::util::command_prelude::*;
@@ -6,6 +9,8 @@ use cargo_util::{ProcessBuilder, ProcessError};
 use clap::{ArgMatches, Command, CommandFactory, Parser};
 use std::ffi::OsStr;
 use std::process::exit;
+use clap::parser::ValuesRef;
+use itertools::Itertools;
 
 mod discover;
 
@@ -32,6 +37,17 @@ fn main() -> Result<()> {
 
     std::env::set_var("COGNO_MANIFEST", manifest_path.to_str().unwrap());
 
+    let reporter_arg: Option<&String> = args.get_one("reporter");
+    if let Some(reporter) = reporter_arg {
+        std::env::set_var("COGNO_REPORTER", reporter);
+    }
+
+    let spec_args: Option<ValuesRef<String>> = args.get_many("spec");
+    if let Some(spec_args) = spec_args {
+        let value: String = spec_args.map(|a| a.as_str()).intersperse(",").collect();
+        std::env::set_var("COGNO_SPECS", value);
+    }
+
     let run_result = call_cargo_run();
     if run_result.is_err() {
         let e = run_result.unwrap_err();
@@ -55,6 +71,7 @@ fn make_command() -> Command {
         .name("cogno")
         .about("Run conformance tests")
         .arg(Arg::new("reporter").long("reporter").help("Use the specific reporter [simple]").action(ArgAction::Set).num_args(0..=1).value_name("REPORTER"))
+        .arg(Arg::new("spec").long("spec").help("enable a spec").action(ArgAction::Append).value_name("SPEC_ID"))
         // Taken from Cargo's `src/bin/cargo/commands/run.rs`
         .about("Run a binary or example of the local package")
         .arg_quiet()

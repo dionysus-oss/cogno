@@ -10,3 +10,4 @@ cargo-util = "0.2.2"
 clap = { version = "4", features = [ "color", "derive", "cargo" ] }
 anyhow = "1"
 regex = "1"
+itertools = "0.10.5"

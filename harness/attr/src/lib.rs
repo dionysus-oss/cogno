@@ -2,9 +2,30 @@ use proc_macro::{Delimiter, Group, TokenStream, TokenTree};
 use core::debug::debug_enabled;
 
 #[proc_macro_attribute]
-pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
+pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     if debug_enabled() {
+        println!("cogno_test attr => {}", attr.to_string());
         println!("cogno_test => {}", item.to_string());
+    }
+
+    let mut header_src = String::new();
+    let mut attr_iter = attr.into_iter();
+    if let Some(TokenTree::Ident(id)) = attr_iter.next() {
+        match id.to_string().as_str() {
+            "spec" => {
+                attr_iter.next();
+                if let Some(TokenTree::Literal(id)) = attr_iter.next() {
+                    header_src.push_str(format!(r#"
+                        if !controller.lock().unwrap().is_spec_enabled({}) {{
+                            return;
+                        }}
+                        "#, id.to_string()).as_str());
+                }
+            }
+            _ => {
+                panic!("Unrecognised syntax in test attribute");
+            }
+        }
     }
 
     let mut ret = TokenStream::new();
@@ -93,6 +114,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         let wrapped_body = to_token_stream(format!(r#"
+            {}
             controller.lock().unwrap().register("{}");
 
     let controller_thread_ref = controller.clone();
@@ -111,7 +133,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
             }}
             _ => {{}}
         }};
-        "#, fn_name, fn_name, new_body.to_string()).as_str());
+        "#, header_src, fn_name, fn_name, new_body.to_string()).as_str());
 
         ret.extend(Some(TokenTree::from(Group::new(
             group.delimiter(),
@@ -147,7 +169,12 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut ret = String::new();
     ret.push_str("fn main() {");
 
-    ret.push_str("let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new()));");
+    ret.push_str(r#"
+    let specs: std::collections::HashSet<String> = std::env::var("COGNO_SPECS").unwrap_or(String::new()).split(",").map(|s| s.to_string()).collect();
+    "#);
+    ret.push_str(r#"
+    let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new(specs)));
+    "#);
 
     ret.push_str(r#"
     let controller_panic_ref = controller.clone();
