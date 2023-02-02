@@ -6,3 +6,4 @@ members = [
     "example",
     "hack",
 ]
+resolver = "2"

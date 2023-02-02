@@ -1,15 +1,23 @@
 use std::fmt::Debug;
 pub use assert::*;
 pub use attr::*;
+use crate::report::model::{AssertionDef, AssertionType, is_passed_assertion, TestDef};
+use crate::report::{ConsoleReporter, Reporter};
+
+mod report;
 
 #[derive(Debug)]
 pub struct TestRecorder {
     tests: Vec<TestDef>,
+    reporter: Box<dyn Reporter>
 }
 
 impl TestRecorder {
     pub fn new() -> Self {
-        TestRecorder { tests: Vec::new() }
+        TestRecorder {
+            tests: Vec::new(),
+            reporter: create_reporter(),
+        }
     }
 
     pub fn register(&mut self, name: &str) {
@@ -22,11 +30,24 @@ impl TestRecorder {
     }
 
     pub fn set_panic_info(&mut self, info: String) {
-        self.tests.last_mut().unwrap().panic_info = Some(info);
+        let current_test = self.tests.last_mut().unwrap();
+        current_test.panic_info = Some(info);
+        self.reporter.report(current_test);
     }
 
     pub fn complete(&mut self) {
-        self.tests.last_mut().unwrap().completed = true;
+        let current_test = self.tests.last_mut().unwrap();
+        current_test.completed = true;
+        self.reporter.report(current_test);
+    }
+
+    // pub fn dump_raw_report(&self) {
+    //     let dump = serde_json::to_string(&self.tests);
+    //     File::create("./cogno-report.json").unwrap().write_all(dump.unwrap().as_bytes()).unwrap();
+    // }
+
+    pub fn finalize(&self) {
+        self.reporter.finalize();
     }
 
     pub fn must_eq<T: PartialEq + Debug>(&mut self, id: &str, expected: T, actual: T) {
@@ -52,7 +73,7 @@ impl TestRecorder {
     fn append_assert<T: PartialEq + Debug>(&mut self, id: &str, kind: AssertionType, expected: T, actual: T) {
         let result = expected == actual;
 
-        let error_message = if self.is_passed_assertion(&kind, result) {
+        let error_message = if is_passed_assertion(&kind, result) {
             None
         } else {
             Some(format!("expected [{:?}] but was [{:?}]", expected, actual))
@@ -67,39 +88,12 @@ impl TestRecorder {
 
         self.tests.last_mut().unwrap().assertions.push(def);
     }
+}
 
-    fn is_passed_assertion(&self, kind: &AssertionType, result: bool) -> bool {
-        match kind {
-            AssertionType::Must => result,
-            AssertionType::MustNot => !result,
-            AssertionType::Should => result,
-            AssertionType::ShouldNot => !result,
-            AssertionType::May => result,
+fn create_reporter() -> Box<dyn Reporter> {
+    match std::env::var("COGNO_REPORTER").unwrap_or("".to_string()).as_str() {
+        "console" | _ => {
+            Box::new(ConsoleReporter::new())
         }
     }
-}
-
-#[derive(Debug)]
-struct TestDef {
-    name: String,
-    panic_info: Option<String>,
-    completed: bool,
-    assertions: Vec<AssertionDef>,
-}
-
-#[derive(Debug)]
-struct AssertionDef {
-    id: String,
-    kind: AssertionType,
-    result: bool,
-    error_message: Option<String>,
-}
-
-#[derive(Debug)]
-enum AssertionType {
-    Must,
-    MustNot,
-    Should,
-    ShouldNot,
-    May,
 }

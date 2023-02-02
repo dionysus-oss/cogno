@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 core = { path = "../core" }
-cargo = { version = "0.67.1", features = ["vendored-openssl"] }
+cargo = { version = "0.68.0", features = ["vendored-openssl"] }
 cargo-util = "0.2.2"
 clap = { version = "4", features = [ "color", "derive", "cargo" ] }
 anyhow = "1"

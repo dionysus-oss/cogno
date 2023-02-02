@@ -54,6 +54,7 @@ fn make_command() -> Command {
     CognoCli::command()
         .name("cogno")
         .about("Run conformance tests")
+        .arg(Arg::new("reporter").long("reporter").help("Use the specific reporter [simple]").action(ArgAction::Set).num_args(0..=1).value_name("REPORTER"))
         // Taken from Cargo's `src/bin/cargo/commands/run.rs`
         .about("Run a binary or example of the local package")
         .arg_quiet()
@@ -101,8 +102,13 @@ fn parse_args() -> Result<(Command, ArgMatches)> {
 pub fn call_cargo_run() -> CliResult {
     let mut args = vec![OsStr::new("run")];
 
-    // Forward args, skipping `cargo cogno`
-    let args1: Vec<String> = std::env::args().skip(2).collect();
+    // Forward args, skipping `cargo cogno <our args> --`
+    let split_index = std::env::args().enumerate().find(|(_, v)| v == "--");
+    let args1: Vec<String> = if let Some((idx, _)) = split_index {
+        std::env::args().skip(idx + 1).collect()
+    } else {
+        vec![]
+    };
     args.extend(args1.iter().map(|f| OsStr::new(f)));
 
     let err = match ProcessBuilder::new("cargo").args(&args).exec_replace() {

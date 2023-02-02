@@ -161,7 +161,7 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
         ret.push_str(format!("{}", module_ref.to_source()).as_str());
     }
 
-    ret.push_str(r#"println!("{:?}", recorder.lock().unwrap());"#);
+    ret.push_str(r#"recorder.lock().unwrap().finalize();"#);
     ret.push_str("}");
 
     let ret = to_token_stream(ret.as_str());
