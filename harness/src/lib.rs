@@ -5,16 +5,17 @@ use crate::report::model::{AssertionDef, AssertionType, is_a_not_assertion, is_p
 use crate::report::{ConsoleReporter, Reporter};
 
 mod report;
+mod spec;
 
 #[derive(Debug)]
-pub struct TestRecorder {
+pub struct TestController {
     tests: Vec<TestDef>,
-    reporter: Box<dyn Reporter>
+    reporter: Box<dyn Reporter>,
 }
 
-impl TestRecorder {
+impl TestController {
     pub fn new() -> Self {
-        TestRecorder {
+        TestController {
             tests: Vec::new(),
             reporter: create_reporter(),
         }

@@ -1,10 +1,10 @@
 use std::panic::catch_unwind;
 use std::{panic, thread};
 use std::sync::{Arc, Mutex};
-use cogno::{should_eq, TestRecorder};
+use cogno::{should_eq, TestController};
 
 fn main() {
-    let mut recorder = Arc::new(Mutex::new(TestRecorder::new()));
+    let mut recorder = Arc::new(Mutex::new(TestController::new()));
 
     let recorder_panic_ref = recorder.clone();
     panic::set_hook(Box::new(move |info| {
@@ -17,7 +17,7 @@ fn main() {
     println!("Results: {:?}", recorder.lock().unwrap());
 }
 
-fn model_test(recorder: &mut Arc<Mutex<TestRecorder>>) {
+fn model_test(recorder: &mut Arc<Mutex<TestController>>) {
     recorder.lock().unwrap().register("model_test");
 
     let recorder_thread_ref = recorder.clone();

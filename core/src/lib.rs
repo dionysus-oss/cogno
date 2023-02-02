@@ -63,7 +63,7 @@ impl ModuleRef {
 
         let mut out = String::new();
         for f in &self.test_functions {
-            out.push_str(format!("{}{}(&mut recorder);\n", parent_import_path, f).as_str());
+            out.push_str(format!("{}{}(&mut controller);\n", parent_import_path, f).as_str());
         }
 
         out

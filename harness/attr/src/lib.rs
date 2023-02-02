@@ -25,7 +25,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
             match token {
                 TokenTree::Group(g) => {
                     if g.delimiter() == Delimiter::Parenthesis {
-                        ret.extend(to_token_stream("(recorder: &mut std::sync::Arc<std::sync::Mutex<cogno::TestRecorder>>)"));
+                        ret.extend(to_token_stream("(controller: &mut std::sync::Arc<std::sync::Mutex<cogno::TestController>>)"));
                         param_injected = true;
                     } else {
                         panic!("unexpected group after test function name");
@@ -70,7 +70,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
                         match group_stream.next() {
                             Some(TokenTree::Group(g)) => {
                                 let mut new_group = TokenStream::new();
-                                new_group.extend(to_token_stream("recorder_thread_ref,"));
+                                new_group.extend(to_token_stream("controller_thread_ref,"));
                                 new_group.extend(g.stream());
 
                                 new_body.extend(Some(TokenTree::from(Group::new(
@@ -93,9 +93,9 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         let wrapped_body = to_token_stream(format!(r#"
-            recorder.lock().unwrap().register("{}");
+            controller.lock().unwrap().register("{}");
 
-    let recorder_thread_ref = recorder.clone();
+    let controller_thread_ref = controller.clone();
 
     let result = std::thread::Builder::new()
     .name("{}".to_string())
@@ -107,7 +107,7 @@ pub fn cogno_test(_: TokenStream, item: TokenStream) -> TokenStream {
 
         match result {{
             Ok(_) => {{
-                recorder.lock().unwrap().complete();
+                controller.lock().unwrap().complete();
             }}
             _ => {{}}
         }};
@@ -147,13 +147,13 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut ret = String::new();
     ret.push_str("fn main() {");
 
-    ret.push_str("let mut recorder = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestRecorder::new()));");
+    ret.push_str("let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new()));");
 
     ret.push_str(r#"
-    let recorder_panic_ref = recorder.clone();
+    let controller_panic_ref = controller.clone();
     std::panic::set_hook(Box::new(move |info| {
-        let mut recorder_handle = recorder_panic_ref.lock().unwrap();
-        recorder_handle.set_panic_info(info.to_string());
+        let mut controller_handle = controller_panic_ref.lock().unwrap();
+        controller_handle.set_panic_info(info.to_string());
     }));
     "#);
 
@@ -161,7 +161,7 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
         ret.push_str(format!("{}", module_ref.to_source()).as_str());
     }
 
-    ret.push_str(r#"recorder.lock().unwrap().finalize();"#);
+    ret.push_str(r#"controller.lock().unwrap().finalize();"#);
     ret.push_str("}");
 
     let ret = to_token_stream(ret.as_str());
