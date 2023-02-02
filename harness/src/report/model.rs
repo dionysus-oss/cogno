@@ -42,8 +42,19 @@ pub fn is_passed_assertion(kind: &AssertionType, result: bool) -> bool {
     }
 }
 
+pub fn is_a_not_assertion(kind: &AssertionType) -> bool {
+    match kind {
+        AssertionType::MustNot | AssertionType::ShouldNot => true,
+        _ => false,
+    }
+}
+
 impl TestDef {
     pub fn get_test_outcome(&self) -> TestOutcome {
+        if let Some(msg) = self.panic_info.clone() {
+            return TestOutcome::Errored(msg)
+        }
+
         if !self.completed {
             return TestOutcome::Errored("Did not complete".to_string())
         };

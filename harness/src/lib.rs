@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 pub use assert::*;
 pub use attr::*;
-use crate::report::model::{AssertionDef, AssertionType, is_passed_assertion, TestDef};
+use crate::report::model::{AssertionDef, AssertionType, is_a_not_assertion, is_passed_assertion, TestDef};
 use crate::report::{ConsoleReporter, Reporter};
 
 mod report;
@@ -41,11 +41,6 @@ impl TestRecorder {
         self.reporter.report(current_test);
     }
 
-    // pub fn dump_raw_report(&self) {
-    //     let dump = serde_json::to_string(&self.tests);
-    //     File::create("./cogno-report.json").unwrap().write_all(dump.unwrap().as_bytes()).unwrap();
-    // }
-
     pub fn finalize(&self) {
         self.reporter.finalize();
     }
@@ -75,6 +70,8 @@ impl TestRecorder {
 
         let error_message = if is_passed_assertion(&kind, result) {
             None
+        } else if is_a_not_assertion(&kind) {
+            Some(format!("got [{:?}]", actual))
         } else {
             Some(format!("expected [{:?}] but was [{:?}]", expected, actual))
         };
