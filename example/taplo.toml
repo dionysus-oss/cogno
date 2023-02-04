@@ -1,0 +1,7 @@
+include = [
+    "sample-modifier.toml"
+]
+
+[formatting]
+align_entries = true
+allowed_blank_lines = 1

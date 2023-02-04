@@ -1,6 +1,6 @@
-use colored::Colorize;
 use crate::report::model::{AssertionType, TestDef, TestOutcome};
 use crate::report::reporter::Reporter;
+use colored::Colorize;
 
 #[derive(Debug)]
 pub struct ConsoleReporter {}
@@ -25,13 +25,40 @@ impl Reporter for ConsoleReporter {
                 for assertion in assertions {
                     match assertion.kind {
                         AssertionType::Must | AssertionType::MustNot => {
-                            println!("\t{} - {} {:?}: {}", "\u{2718}".red(), assertion.id, assertion.kind, assertion.error_message.as_ref().unwrap_or(&"missing error message".to_string()))
+                            println!(
+                                "\t{} - {} {:?}: {}",
+                                "\u{2718}".red(),
+                                assertion.id,
+                                assertion.kind,
+                                assertion
+                                    .error_message
+                                    .as_ref()
+                                    .unwrap_or(&"missing error message".to_string())
+                            )
                         }
                         AssertionType::Should | AssertionType::ShouldNot => {
-                            println!("\t{} - {} {:?}: {}", "\u{2718}".blue(), assertion.id, assertion.kind, assertion.error_message.as_ref().unwrap_or(&"missing error message".to_string()))
+                            println!(
+                                "\t{} - {} {:?}: {}",
+                                "\u{2718}".blue(),
+                                assertion.id,
+                                assertion.kind,
+                                assertion
+                                    .error_message
+                                    .as_ref()
+                                    .unwrap_or(&"missing error message".to_string())
+                            )
                         }
                         AssertionType::May => {
-                            println!("\t{} - {} {:?}: {}", "\u{2718}", assertion.id, assertion.kind, assertion.error_message.as_ref().unwrap_or(&"missing error message".to_string()))
+                            println!(
+                                "\t{} - {} {:?}: {}",
+                                "\u{2718}",
+                                assertion.id,
+                                assertion.kind,
+                                assertion
+                                    .error_message
+                                    .as_ref()
+                                    .unwrap_or(&"missing error message".to_string())
+                            )
                         }
                     }
                 }

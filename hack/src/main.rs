@@ -1,7 +1,7 @@
-use std::panic::catch_unwind;
-use std::{panic, thread};
-use std::sync::{Arc, Mutex};
 use cogno::{should_eq, TestController};
+use std::panic::catch_unwind;
+use std::sync::{Arc, Mutex};
+use std::{panic, thread};
 
 fn main() {
     let mut recorder = Arc::new(Mutex::new(TestController::new()));
@@ -24,12 +24,15 @@ fn model_test(recorder: &mut Arc<Mutex<TestController>>) {
     let result = thread::Builder::new()
         .name("model_test".to_string())
         .spawn(move || {
-        catch_unwind(move || {
-            should_eq!(recorder_thread_ref, "rfc_1234_sec_8.1", 'a', 'a');
+            catch_unwind(move || {
+                should_eq!(recorder_thread_ref, "rfc_1234_sec_8.1", 'a', 'a');
 
-            should_eq!(recorder_thread_ref, "rfc_1234_sec_8.2", 'a', 'b');
+                should_eq!(recorder_thread_ref, "rfc_1234_sec_8.2", 'a', 'b');
+            })
         })
-    }).unwrap().join().unwrap();
+        .unwrap()
+        .join()
+        .unwrap();
 
     match result {
         Ok(_) => {

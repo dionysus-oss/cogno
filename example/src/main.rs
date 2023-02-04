@@ -17,10 +17,10 @@ fn panic_test() {
 #[cogno_test(spec = "1234")]
 fn failed_assertions() {
     must_eq!("rfc_must", 'a', 'b');
-    must_not_eq!("rfc_must", 'a', 'a');
-    should_eq!("rfc_must", 'a', 'b');
-    should_not_eq!("rfc_must", 'a', 'a');
-    may_eq!("rfc_must", 'a', 'b');
+    must_not_eq!("rfc_must_not", 'a', 'a');
+    should_eq!("rfc_should", 'a', 'b');
+    should_not_eq!("rfc_should_not", 'a', 'a');
+    may_eq!("rfc_may", 'a', 'b');
 }
 
 #[cogno_main]

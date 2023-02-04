@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestDef {
     pub name: String,
+    pub spec_id: String,
     pub panic_info: Option<String>,
     pub completed: bool,
     pub assertions: Vec<AssertionDef>,
@@ -16,7 +17,7 @@ pub struct AssertionDef {
     pub error_message: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AssertionType {
     Must,
     MustNot,
@@ -52,14 +53,18 @@ pub fn is_a_not_assertion(kind: &AssertionType) -> bool {
 impl TestDef {
     pub fn get_test_outcome(&self) -> TestOutcome {
         if let Some(msg) = self.panic_info.clone() {
-            return TestOutcome::Errored(msg)
+            return TestOutcome::Errored(msg);
         }
 
         if !self.completed {
-            return TestOutcome::Errored("Did not complete".to_string())
+            return TestOutcome::Errored("Did not complete".to_string());
         };
 
-        let failed_assertions: Vec<&AssertionDef> = self.assertions.iter().filter(|ta| ta.is_failed_assertion()).collect();
+        let failed_assertions: Vec<&AssertionDef> = self
+            .assertions
+            .iter()
+            .filter(|ta| ta.is_failed_assertion())
+            .collect();
         if !failed_assertions.is_empty() {
             return TestOutcome::AssertionsFailed(failed_assertions);
         }

@@ -1,0 +1,8 @@
+[[spec_modifiers]]
+spec_id = "1234"
+
+test_modifiers = [
+  { test_id = "failed_assertions", assertion_modifiers = [
+    { assertion_id = "rfc_must", assertion_type = "MustNot" },
+  ] },
+]

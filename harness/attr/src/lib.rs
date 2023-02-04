@@ -1,5 +1,5 @@
-use proc_macro::{Delimiter, Group, TokenStream, TokenTree};
 use core::debug::debug_enabled;
+use proc_macro::{Delimiter, Group, TokenStream, TokenTree};
 
 #[proc_macro_attribute]
 pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -8,6 +8,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         println!("cogno_test => {}", item.to_string());
     }
 
+    let mut spec_id = String::new();
     let mut header_src = String::new();
     let mut attr_iter = attr.into_iter();
     if let Some(TokenTree::Ident(id)) = attr_iter.next() {
@@ -15,11 +16,18 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             "spec" => {
                 attr_iter.next();
                 if let Some(TokenTree::Literal(id)) = attr_iter.next() {
-                    header_src.push_str(format!(r#"
+                    spec_id = id.to_string();
+                    header_src.push_str(
+                        format!(
+                            r#"
                         if !controller.lock().unwrap().is_spec_enabled({}) {{
                             return;
                         }}
-                        "#, id.to_string()).as_str());
+                        "#,
+                            spec_id
+                        )
+                        .as_str(),
+                    );
                 }
             }
             _ => {
@@ -86,7 +94,9 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 "should_eq" | "should_not_eq" | "must_eq" | "must_not_eq" | "may_eq" => {
                     new_body.extend(group_stream.next());
 
-                    if group_stream.peek().is_some() && group_stream.peek().unwrap().to_string() == "!" {
+                    if group_stream.peek().is_some()
+                        && group_stream.peek().unwrap().to_string() == "!"
+                    {
                         new_body.extend(group_stream.next());
                         match group_stream.next() {
                             Some(TokenTree::Group(g)) => {
@@ -113,9 +123,11 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
-        let wrapped_body = to_token_stream(format!(r#"
+        let wrapped_body = to_token_stream(
+            format!(
+                r#"
             {}
-            controller.lock().unwrap().register("{}");
+            controller.lock().unwrap().register("{}", {});
 
     let controller_thread_ref = controller.clone();
 
@@ -133,7 +145,15 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             }}
             _ => {{}}
         }};
-        "#, header_src, fn_name, fn_name, new_body.to_string()).as_str());
+        "#,
+                header_src,
+                fn_name,
+                spec_id,
+                fn_name,
+                new_body.to_string()
+            )
+            .as_str(),
+        );
 
         ret.extend(Some(TokenTree::from(Group::new(
             group.delimiter(),
@@ -170,19 +190,18 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     ret.push_str("fn main() {");
 
     ret.push_str(r#"
-    let specs: std::collections::HashSet<String> = std::env::var("COGNO_SPECS").unwrap_or(String::new()).split(",").map(|s| s.to_string()).collect();
-    "#);
-    ret.push_str(r#"
-    let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new(specs)));
+    let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new().unwrap()));
     "#);
 
-    ret.push_str(r#"
+    ret.push_str(
+        r#"
     let controller_panic_ref = controller.clone();
     std::panic::set_hook(Box::new(move |info| {
         let mut controller_handle = controller_panic_ref.lock().unwrap();
         controller_handle.set_panic_info(info.to_string());
     }));
-    "#);
+    "#,
+    );
 
     for module_ref in manifest {
         ret.push_str(format!("{}", module_ref.to_source()).as_str());
