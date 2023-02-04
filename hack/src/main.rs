@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::{panic, thread};
 
 fn main() {
-    let mut recorder = Arc::new(Mutex::new(TestController::new()));
+    let mut recorder = Arc::new(Mutex::new(TestController::new().unwrap()));
 
     let recorder_panic_ref = recorder.clone();
     panic::set_hook(Box::new(move |info| {
@@ -18,7 +18,7 @@ fn main() {
 }
 
 fn model_test(recorder: &mut Arc<Mutex<TestController>>) {
-    recorder.lock().unwrap().register("model_test");
+    recorder.lock().unwrap().register("model_test", "1234");
 
     let recorder_thread_ref = recorder.clone();
     let result = thread::Builder::new()
