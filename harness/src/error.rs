@@ -1,5 +1,3 @@
-use crate::spec::AssertionModifier;
-use std::collections::HashSet;
 use std::io;
 use thiserror::Error;
 
@@ -13,4 +11,7 @@ pub enum CognoError {
 
     #[error("conflicting modifiers {0}")]
     ConflictingModifiers(String),
+
+    #[error("serialisation error {0}")]
+    SerialisationError(#[from] serde_json::Error)
 }

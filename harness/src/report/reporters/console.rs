@@ -1,6 +1,7 @@
 use crate::report::model::{AssertionType, TestDef, TestOutcome};
 use crate::report::reporter::Reporter;
 use colored::Colorize;
+use crate::error::CognoError;
 
 #[derive(Debug)]
 pub struct ConsoleReporter {}
@@ -66,7 +67,8 @@ impl Reporter for ConsoleReporter {
         }
     }
 
-    fn finalize(&self) {
+    fn finalize(&self) -> Result<(), CognoError> {
         // Nothing to do
+        Ok(())
     }
 }

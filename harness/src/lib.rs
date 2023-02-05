@@ -9,6 +9,7 @@ pub use attr::*;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::fmt::Debug;
+use crate::report::reporters::raw::RawReporter;
 
 mod error;
 mod report;
@@ -50,6 +51,10 @@ impl TestController {
     }
 
     pub fn set_panic_info(&mut self, info: String) {
+        if self.tests.is_empty() {
+            return;
+        }
+
         let current_test = self.tests.last_mut().unwrap();
         current_test.panic_info = Some(info);
         self.reporter.report(current_test);
@@ -61,8 +66,8 @@ impl TestController {
         self.reporter.report(current_test);
     }
 
-    pub fn finalize(&self) {
-        self.reporter.finalize();
+    pub fn finalize(&self) -> Result<(), CognoError> {
+        self.reporter.finalize()
     }
 
     pub fn must_eq<T: PartialEq + Debug>(
@@ -183,6 +188,7 @@ fn create_reporter() -> Box<dyn Reporter> {
         .unwrap_or("".to_string())
         .as_str()
     {
+        "raw" => Box::new(RawReporter::new()),
         "console" | _ => Box::new(ConsoleReporter::new()),
     }
 }

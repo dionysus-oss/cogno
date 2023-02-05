@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestDef {
     pub name: String,
     pub spec_id: String,
@@ -9,7 +9,7 @@ pub struct TestDef {
     pub assertions: Vec<AssertionDef>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssertionDef {
     pub id: String,
     pub kind: AssertionType,
