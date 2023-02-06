@@ -21,6 +21,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                         format!(
                             r#"
                         if !controller.lock().unwrap().is_spec_enabled({}) {{
+                            cogno::tracing::event!(cogno::tracing::Level::INFO, "skipped");
                             return;
                         }}
                         "#,
@@ -123,6 +124,14 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
+        let mut traced_header_src = String::new();
+        traced_header_src.push_str(format!(r#"
+        let span = cogno::tracing::span!(cogno::tracing::Level::INFO, "{}");
+        let _enter = span.enter();
+        cogno::tracing::event!(cogno::tracing::Level::INFO, "enter");
+        {}
+        "#, fn_name, header_src).as_str());
+
         let wrapped_body = to_token_stream(
             format!(
                 r#"
@@ -139,6 +148,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             }})
         }}).unwrap().join().unwrap();
 
+        cogno::tracing::event!(cogno::tracing::Level::INFO, "exit");
         match result {{
             Ok(_) => {{
                 controller.lock().unwrap().complete();
@@ -146,7 +156,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             _ => {{}}
         }};
         "#,
-                header_src,
+                traced_header_src,
                 fn_name,
                 spec_id,
                 fn_name,
@@ -190,6 +200,15 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     ret.push_str("fn main() {");
 
     ret.push_str(r#"
+    if "true" == std::env::var("COGNO_TRACE").unwrap_or(String::from("false")).as_str() {
+        let sub = cogno::tracing_subscriber::FmtSubscriber::new();
+        cogno::tracing::subscriber::set_global_default(sub)
+            .expect("setting tracing default failed");
+    }
+    let span = cogno::tracing::span!(cogno::tracing::Level::INFO, "cogno_main");
+    let _enter = span.enter();
+    cogno::tracing::event!(cogno::tracing::Level::INFO, "starting");
+
     let mut controller = std::sync::Arc::new(std::sync::Mutex::new(cogno::TestController::new().unwrap()));
     "#);
 
@@ -197,6 +216,7 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
         r#"
     let controller_panic_ref = controller.clone();
     std::panic::set_hook(Box::new(move |info| {
+        cogno::tracing::event!(cogno::tracing::Level::INFO, "captured a panic - {}", info);
         let mut controller_handle = controller_panic_ref.lock().unwrap();
         controller_handle.set_panic_info(info.to_string());
     }));
@@ -208,8 +228,10 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     ret.push_str(r#"
+    cogno::tracing::event!(cogno::tracing::Level::INFO, "finishing report");
     let finalize_result = controller.lock().unwrap().finalize();
     finalize_result.unwrap();
+    cogno::tracing::event!(cogno::tracing::Level::INFO, "done");
     "#);
     ret.push_str("}");
 

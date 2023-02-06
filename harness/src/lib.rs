@@ -11,6 +11,9 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use crate::report::reporters::raw::RawReporter;
 
+pub extern crate tracing;
+pub extern crate tracing_subscriber;
+
 mod error;
 mod report;
 mod spec;

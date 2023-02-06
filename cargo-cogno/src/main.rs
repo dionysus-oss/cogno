@@ -54,6 +54,11 @@ fn main() -> Result<()> {
         std::env::set_var("COGNO_MODIFIERS", value);
     }
 
+    let trace_flag: bool = args.get_flag("trace");
+    if trace_flag {
+        std::env::set_var("COGNO_TRACE", "true");
+    }
+
     let run_result = call_cargo_run();
     if run_result.is_err() {
         let e = run_result.unwrap_err();
@@ -97,6 +102,12 @@ fn make_command() -> Command {
                 .help("a modifier file")
                 .action(ArgAction::Append)
                 .value_name("PATH"),
+        )
+        .arg(
+            Arg::new("trace")
+                .long("trace")
+                .help("Enable tracing")
+                .action(ArgAction::SetTrue)
         )
         // Taken from Cargo's `src/bin/cargo/commands/run.rs`
         .about("Run a binary or example of the local package")
