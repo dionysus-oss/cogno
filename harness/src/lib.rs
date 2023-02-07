@@ -6,6 +6,7 @@ use crate::report::{ConsoleReporter, Reporter};
 use crate::spec::{load_spec_modifier, AssertionModifier, SpecModifier};
 pub use assert::*;
 pub use attr::*;
+pub use proc::*;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::fmt::Debug;
