@@ -1,5 +1,12 @@
-use core::debug::debug_enabled;
+use debug::debug_enabled;
 use proc_macro::{Delimiter, Group, TokenStream, TokenTree};
+use std::fs::File;
+use std::io;
+use std::io::Read;
+use std::path::Path;
+
+mod debug;
+mod module_ref;
 
 #[proc_macro_attribute]
 pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -190,7 +197,7 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
         panic!("Run with `cargo cogno`")
     }
 
-    let manifest = core::load_manifest(manifest_path.unwrap()).unwrap();
+    let manifest = load_manifest(manifest_path.unwrap()).unwrap();
 
     if debug_enabled() {
         println!("manifest => {:?}", manifest);
@@ -246,4 +253,11 @@ pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
 
 fn to_token_stream(code: &str) -> TokenStream {
     code.parse().unwrap()
+}
+
+fn load_manifest<P: AsRef<Path>>(source: P) -> Result<Vec<module_ref::ModuleRef>, io::Error> {
+    let mut content = String::new();
+    File::open(source)?.read_to_string(&mut content)?;
+    let module_refs = serde_json::from_str(content.as_str())?;
+    Ok(module_refs)
 }

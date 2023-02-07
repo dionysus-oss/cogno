@@ -1,6 +1,3 @@
-// For intersperse in itertools vs stdlib
-#![allow(unstable_name_collisions)]
-
 use anyhow::{anyhow, Result};
 use cargo::util::command_prelude::ArgMatchesExt;
 use cargo::util::command_prelude::*;
@@ -8,11 +5,15 @@ use cargo::{CliResult, Config};
 use cargo_util::{ProcessBuilder, ProcessError};
 use clap::parser::ValuesRef;
 use clap::{ArgMatches, Command, CommandFactory, Parser};
-use itertools::Itertools;
 use std::ffi::OsStr;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 use std::process::exit;
+use crate::module_ref::ModuleRef;
 
 mod discover;
+mod module_ref;
 
 fn main() -> Result<()> {
     let config = Config::default()?;
@@ -33,7 +34,7 @@ fn main() -> Result<()> {
 
     let found = discover::discover(&current_project.join("src"))?;
     let manifest_path = path.join("cogno-manifest.json");
-    core::dump_manifest(found, &manifest_path)?;
+    dump_manifest(found, &manifest_path)?;
 
     std::env::set_var("COGNO_MANIFEST", manifest_path.to_str().unwrap());
 
@@ -44,13 +45,13 @@ fn main() -> Result<()> {
 
     let spec_args: Option<ValuesRef<String>> = args.get_many("spec");
     if let Some(spec_args) = spec_args {
-        let value: String = spec_args.map(|a| a.as_str()).intersperse(",").collect();
+        let value: String = itertools::intersperse(spec_args.map(|a| a.as_str()), ",").collect();
         std::env::set_var("COGNO_SPECS", value);
     }
 
     let modifier_args: Option<ValuesRef<String>> = args.get_many("modifier");
     if let Some(modifier_args) = modifier_args {
-        let value: String = modifier_args.map(|a| a.as_str()).intersperse(",").collect();
+        let value: String = itertools::intersperse(modifier_args.map(|a| a.as_str()), ",").collect();
         std::env::set_var("COGNO_MODIFIERS", value);
     }
 
@@ -177,4 +178,10 @@ pub fn call_cargo_run() -> CliResult {
     }
 
     Err(CliError::new(err, 1))
+}
+
+fn dump_manifest<P: AsRef<Path>>(module_refs: Vec<ModuleRef>, target: P) -> Result<()> {
+    let serialised = serde_json::to_string(&module_refs)?;
+    File::create(target)?.write_all(serialised.as_bytes())?;
+    Ok(())
 }

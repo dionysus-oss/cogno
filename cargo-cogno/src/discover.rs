@@ -1,9 +1,9 @@
 use anyhow::Result;
-use core::ModuleRef;
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use crate::module_ref::ModuleRef;
 
 pub fn discover<P: AsRef<Path>>(path: P) -> Result<Vec<ModuleRef>> {
     let mut source_files = discover_source_files(&path, &PathBuf::new())?;

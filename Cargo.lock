@@ -37,7 +37,9 @@ version = "0.1.0"
 name = "attr"
 version = "0.1.0"
 dependencies = [
- "core",
+ "itertools",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -193,9 +195,10 @@ dependencies = [
  "cargo",
  "cargo-util",
  "clap",
- "core",
  "itertools",
  "regex",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -335,16 +338,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fed34f46747aa73dfaa578069fd8279d2818ade2b55f38f22a9401c7f4083e2"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "itertools",
- "serde",
- "serde_json",
 ]
 
 [[package]]
