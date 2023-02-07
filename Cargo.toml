@@ -4,6 +4,5 @@ members = [
     "harness",
     "cargo-cogno",
     "example",
-    "hack",
 ]
 resolver = "2"

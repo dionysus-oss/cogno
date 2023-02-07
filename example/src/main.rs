@@ -3,7 +3,7 @@ extern crate cogno;
 
 use std::process::Command;
 
-mod sting;
+mod other;
 
 #[cogno_test(spec = "1234")]
 fn test() {
