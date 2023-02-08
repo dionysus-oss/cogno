@@ -6,6 +6,7 @@ use cargo_util::{ProcessBuilder, ProcessError};
 use clap::parser::ValuesRef;
 use clap::{ArgMatches, Command, CommandFactory, Parser};
 use std::ffi::OsStr;
+use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -27,13 +28,16 @@ fn main() -> Result<()> {
     let ws = args.workspace(&config)?;
 
     let fs = ws.target_dir();
-    let path = fs.as_path_unlocked();
+    let target_dir = fs.as_path_unlocked();
+    if !target_dir.exists() {
+        fs::create_dir_all(target_dir)?;
+    }
 
     // TODO how to detect/handle a workspace with multiple projects
     let current_project = ws.current_opt().unwrap().root();
 
     let found = discover::discover(&current_project.join("src"))?;
-    let manifest_path = path.join("cogno-manifest.json");
+    let manifest_path = target_dir.join("cogno-manifest.json");
     dump_manifest(found, &manifest_path)?;
 
     std::env::set_var("COGNO_MANIFEST", manifest_path.to_str().unwrap());
