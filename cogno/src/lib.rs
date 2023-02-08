@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use crate::error::CognoError;
 use crate::report::model::{
     is_a_not_assertion, is_passed_assertion, AssertionDef, AssertionType, TestDef,
@@ -20,6 +22,10 @@ mod error;
 mod report;
 mod spec;
 
+/// Used by the test harness. Not for direct use.
+///
+/// Holds test state by recording assertions and test metadata. It drives the test reporter as
+/// assertions arrive.
 #[derive(Debug)]
 pub struct TestController {
     tests: Vec<TestDef>,

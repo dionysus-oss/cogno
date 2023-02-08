@@ -2,6 +2,11 @@
 name = "cogno"
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3.0"
+description = "A test harness for writing RFC spec tests"
+homepage = "https://github.com/dionysus-oss/cogno/"
+repository = "https://github.com/dionysus-oss/cogno/"
+readme = "README.md"
 
 [dependencies]
 attr = { path = "./attr" }

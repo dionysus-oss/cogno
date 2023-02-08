@@ -8,6 +8,26 @@ use std::path::Path;
 mod debug;
 mod module_ref;
 
+/// Mark a function as a Cogno test.
+///
+/// This attribute accepts a `spec` parameter which groups the test under a specification identifier.
+/// The attribute is optional but recommended!
+///
+/// ```
+/// #[cogno_test(spec = "rfc-1034")]
+/// fn example_test() {}
+/// ```
+///
+/// If you choose not to group your tests by specification because what you are testing is standalone then
+///
+/// ```
+/// #[cogno_test]
+/// fn example_test() {}
+/// ```
+///
+/// Your test should use the provided assertion macros like `should_eq!` and avoid panicking unless necessary.
+/// That means you should avoid Rust's `assert_eq!` and other test assertion macros.
+/// However, a program failing to start or being unable to open a file would be valid reasons to panic and fail the test.
 #[proc_macro_attribute]
 pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     if debug_enabled() {
@@ -191,6 +211,16 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     ret
 }
 
+/// Generate the main function to run Cogno tests.
+///
+/// The entry point of your program should be marked with this attributed and be empty
+///
+/// ```
+/// #[cogno_main]
+/// fn main() {}
+/// ```
+///
+/// The generated code will include a `TestController` and invocations of each of your test functions.
 #[proc_macro_attribute]
 pub fn cogno_main(_: TokenStream, item: TokenStream) -> TokenStream {
     if debug_enabled() {
