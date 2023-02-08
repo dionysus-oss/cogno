@@ -16,6 +16,11 @@ fn panic_test() {
     panic!("I'm not a great test");
 }
 
+#[cogno_test]
+fn always_test() {
+    should_eq!("always_assert_me", "a", "b");
+}
+
 #[cogno_test(spec = "1234")]
 fn failed_assertions() {
     let child = Command::new("ls").arg("-al").spawn().unwrap();

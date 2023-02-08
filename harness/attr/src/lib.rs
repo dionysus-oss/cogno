@@ -34,7 +34,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                         "#,
                             spec_id
                         )
-                        .as_str(),
+                            .as_str(),
                     );
                 }
             }
@@ -42,6 +42,12 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 panic!("Unrecognised syntax in test attribute");
             }
         }
+    }
+
+    // Default to literal empty string if no spec_id provided.
+    // This is expected to be unusual, but is supported
+    if spec_id.is_empty() {
+        spec_id.push_str("\"\"");
     }
 
     let mut ret = TokenStream::new();
@@ -169,7 +175,7 @@ pub fn cogno_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 fn_name,
                 new_body.to_string()
             )
-            .as_str(),
+                .as_str(),
         );
 
         ret.extend(Some(TokenTree::from(Group::new(
