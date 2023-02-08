@@ -2,7 +2,7 @@ use crate::error::CognoError;
 use crate::report::model::{
     is_a_not_assertion, is_passed_assertion, AssertionDef, AssertionType, TestDef,
 };
-use crate::report::{ConsoleReporter, Reporter};
+use crate::report::{Reporter, RawReporter};
 use crate::spec::{load_spec_modifier, AssertionModifier, SpecModifier};
 pub use assert::*;
 pub use attr::*;
@@ -10,7 +10,8 @@ pub use proc::*;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::fmt::Debug;
-use crate::report::reporters::raw::RawReporter;
+#[cfg(feature = "console")]
+use crate::report::ConsoleReporter;
 
 pub extern crate tracing;
 pub extern crate tracing_subscriber;
@@ -192,8 +193,17 @@ fn create_reporter() -> Box<dyn Reporter> {
         .unwrap_or("".to_string())
         .as_str()
     {
+        "console" => {
+            #[cfg(not(feature = "console"))]
+            panic!("Reporter is not enabled, requires feature 'console'");
+            #[cfg(feature = "console")]
+            Box::new(ConsoleReporter::new())
+        }
         "raw" => Box::new(RawReporter::new()),
-        "console" | _ => Box::new(ConsoleReporter::new()),
+        #[cfg(not(feature = "console"))]
+        _ => Box::new(RawReporter::new()),
+        #[cfg(feature = "console")]
+        _ => Box::new(ConsoleReporter::new()),
     }
 }
 

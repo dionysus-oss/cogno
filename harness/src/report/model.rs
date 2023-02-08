@@ -26,11 +26,17 @@ pub enum AssertionType {
     May,
 }
 
+#[cfg(feature = "console")]
 #[derive(Debug)]
 pub enum TestOutcome<'a> {
     Errored(String),
     AssertionsFailed(Vec<&'a AssertionDef>),
     Passed,
+}
+
+#[cfg(not(feature = "console"))]
+#[derive(Debug)]
+pub enum TestOutcome {
 }
 
 pub fn is_passed_assertion(kind: &AssertionType, result: bool) -> bool {
@@ -51,6 +57,7 @@ pub fn is_a_not_assertion(kind: &AssertionType) -> bool {
 }
 
 impl TestDef {
+    #[cfg(feature = "console")]
     pub fn get_test_outcome(&self) -> TestOutcome {
         if let Some(msg) = self.panic_info.clone() {
             return TestOutcome::Errored(msg);
@@ -74,6 +81,7 @@ impl TestDef {
 }
 
 impl AssertionDef {
+    #[cfg(feature = "console")]
     fn is_failed_assertion(&self) -> bool {
         !is_passed_assertion(&self.kind, self.result)
     }
