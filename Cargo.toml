@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "harness",
+    "cogno",
     "cargo-cogno",
     "example",
 ]

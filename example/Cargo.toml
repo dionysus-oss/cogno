@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cogno = { path = "../harness", features = ["console"] }
+cogno = { path = "../cogno", features = ["console"] }
