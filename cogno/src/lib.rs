@@ -21,6 +21,8 @@ pub extern crate tracing_subscriber;
 mod error;
 mod report;
 mod spec;
+mod assert;
+mod proc;
 
 /// Used by the test harness. Not for direct use.
 ///
