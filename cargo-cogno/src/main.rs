@@ -89,7 +89,7 @@ fn make_command() -> Command {
         .arg(
             Arg::new("reporter")
                 .long("reporter")
-                .help("Use the specific reporter [simple]")
+                .help("Use the specific reporter [console|raw]")
                 .action(ArgAction::Set)
                 .num_args(0..=1)
                 .value_name("REPORTER"),

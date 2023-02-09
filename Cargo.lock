@@ -289,6 +289,8 @@ dependencies = [
 [[package]]
 name = "cogno-attr"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed9030850a2ee39c83447b14ff9e31824106cd8d06a10dcc7686c65b03b5c822"
 dependencies = [
  "itertools",
  "serde",

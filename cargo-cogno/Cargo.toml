@@ -7,6 +7,9 @@ description = "A Cargo plugin to run Cogno tests"
 homepage = "https://github.com/dionysus-oss/cogno/"
 repository = "https://github.com/dionysus-oss/cogno/"
 readme = "README.md"
+exclude = [
+    "./dev-install.sh"
+]
 
 [dependencies]
 cargo = { version = "0.68.0", features = ["vendored-openssl"] }
