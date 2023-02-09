@@ -7,7 +7,7 @@ use crate::report::model::{
 use crate::report::{Reporter, RawReporter};
 use crate::spec::{load_spec_modifier, AssertionModifier, SpecModifier};
 pub use assert::*;
-pub use attr::*;
+pub use cogno_attr::*;
 pub use proc::*;
 use itertools::Itertools;
 use std::collections::HashSet;

@@ -1,7 +1,12 @@
 [package]
-name = "attr"
+name = "cogno-attr"
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3.0"
+description = "A part of the Cogno test harness providing procedural macros"
+homepage = "https://github.com/dionysus-oss/cogno/"
+repository = "https://github.com/dionysus-oss/cogno/"
+readme = "README.md"
 
 [lib]
 proc-macro = true
